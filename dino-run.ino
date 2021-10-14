@@ -40,11 +40,14 @@ byte crow[] = {
 };
 
 const int buttonPin = 13;
-const int jumpDuration = 500;
+const int jumpDuration = 600;
 unsigned long int startTime;
 bool isJumping = false;
 int cactusPos = 16;
 int buttonState = LOW;
+int gameState = 0;
+int Li = 16;
+int Lii = 0;
 
 void setup() {
   // Initializing LCD.
@@ -57,6 +60,30 @@ void setup() {
 
   pinMode(buttonPin, INPUT);
   buttonState = digitalRead(buttonPin);
+}
+
+String scrollLCDLeft(String str) {
+  String result, temp = "                " + str + "                ";
+  result = temp.substring(Li, Lii);
+  Li++;
+  Lii++;
+  if (Li > temp.length()) {
+    Li = 16;
+  	Lii = 0;
+  }
+  delay(100);
+  return result;
+}
+
+void splashScreen() {
+  lcd.setCursor(1, 0);
+  lcd.print("Dinosaur Jump!");
+  lcd.setCursor(0, 1);
+  lcd.print(scrollLCDLeft("Press BUTTON to start"));
+  if (button() == 1) {
+  	gameState = 1;
+    lcd.clear();
+  }
 }
 
 void jump() {
@@ -74,10 +101,10 @@ void unjump() {
 }
 
 unsigned long int currJump = 0;
-
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 50; 
-int lastButtonState=LOW;
+int lastButtonState = LOW;
+int score = 0;
 
 int button() 
 {
@@ -98,7 +125,10 @@ int button()
      lastButtonState = reading;
 }
 
-void loop() {
+int game() {
+  lcd.setCursor(12, 0);
+  lcd.print(score);
+  
   if (button() == 1) {
     jump();
     isJumping = true;
@@ -122,6 +152,38 @@ void loop() {
   cactusPos--;
   lcd.setCursor(cactusPos, 1);
   lcd.write(byte(0));
-  delay(175);
+  delay(125);
   if (cactusPos < 0) cactusPos = 16;
+  
+  if (isJumping == false && cactusPos == 2) {
+    gameState = 2;
+    lcd.clear();
+  	return score;
+  }
+  
+  score++;
+}
+
+void gameOver() {
+  lcd.setCursor(3, 0);
+  lcd.print("GAME OVER!");
+  lcd.setCursor(0, 1);
+  String display = "Score: " + String(score) + ". Press BUTTON to play again!";
+  lcd.print(scrollLCDLeft(display));
+  if (button() == 1) {
+  	score = 0;
+    gameState = 1;
+    lcd.clear();
+  }
+}
+
+void loop() {
+  if (gameState == 0)
+    splashScreen();
+  
+  if (gameState == 1)
+  	game();
+  
+  if (gameState == 2)
+    gameOver();
 }
