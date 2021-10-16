@@ -43,10 +43,11 @@ byte crow[] = {
 const int buttonPin = 13;
 const int jumpDuration = 600;
 
-
 unsigned long int startTime;
 bool isJumping = false;
-int obstaclePos = 16;
+int obstacle = 1;
+int obstacleXPos = 16;
+int obstacleYPos = 1;
 int buttonState = LOW;
 int gameState = 0;
 int Li = 16;
@@ -61,14 +62,12 @@ int luck;
 int maxscore;
 int maxFlag=0;
 
-void writeIntIntoEEPROM(int address, int number)
-{ 
+void writeIntIntoEEPROM(int address, int number) { 
   EEPROM.write(address, number >> 8);
   EEPROM.write(address + 1, number & 0xFF);
 }
 
-int readIntFromEEPROM(int address)
-{
+int readIntFromEEPROM(int address) {
   return (EEPROM.read(address) << 8) + EEPROM.read(address + 1);
 }
 
@@ -78,8 +77,8 @@ void setup() {
   Serial.begin(9600);
   
   // Creating characters.
-  lcd.createChar(0, cactus);
-  lcd.createChar(1, dino);
+  lcd.createChar(0, dino);
+  lcd.createChar(1, cactus);
   lcd.createChar(2, crow);
 
   pinMode(buttonPin, INPUT);
@@ -130,17 +129,17 @@ void splashScreen() {
 }
 
 void jump() {
-  lcd.setCursor(2,1);
+  lcd.setCursor(2, 1);
   lcd.write(" ");
-  lcd.setCursor(2,0);
-  lcd.write(byte(1));
+  lcd.setCursor(2, 0);
+  lcd.write(byte(0));
 }
 
 void unjump() {
-  lcd.setCursor(2,0);
+  lcd.setCursor(2, 0);
   lcd.write(" ");
-  lcd.setCursor(2,1);
-  lcd.write(byte(1));
+  lcd.setCursor(2, 1);
+  lcd.write(byte(0));
 }
 
 int button() 
@@ -164,27 +163,29 @@ int button()
 
 void renderObstacle() {
   // Move terrain and create obstacles.
-  int obstacle = 0;
-  
-  lcd.setCursor(obstaclePos, 1);
+  lcd.setCursor(obstacleXPos, obstacleYPos);
   lcd.write(" ");
-  obstaclePos--;
+  obstacleXPos--;
   
   // Reset obstatcle if out of frame.
-  if (obstaclePos < 0) {
-    obstaclePos = 16;
+  if (obstacleXPos < 0) {
+    obstacleXPos = 16;
     randomSeed(score);
     luck = random(5);
   }
   
-  if (score > 50) {
-        if (luck % 2 == 0)
-          obstacle = 2;
-        else
-          obstacle = 0;
+  if (score > 10) {
+    if (luck % 2 == 0) {
+      obstacle = 1;
+      obstacleYPos = 1;
+    }
+    else {
+      obstacle = 2;
+      obstacleYPos = 0;
+    }
   }
   
-  lcd.setCursor(obstaclePos, 1);
+  lcd.setCursor(obstacleXPos, obstacleYPos);
   lcd.write(byte(obstacle));
   
   delay(delayTime);
@@ -212,15 +213,18 @@ int game() {
   // Else make sure the dinosaur doesnot clip and disappear. 
   else {
     lcd.setCursor(2,1);
-    lcd.write(byte(1));
+    lcd.write(byte(0));
   }
 
   renderObstacle();
   
-  if (isJumping == false && obstaclePos == 2) {
-    gameState = 2;
-    lcd.clear();
-  	return score;
+  // Checking for collisions.
+  if (obstacleXPos == 2) {
+    if ((isJumping == false && obstacle == 1) || (isJumping == true && obstacle == 2)) {
+      gameState = 2;
+      lcd.clear();
+  	  return score;
+    }
   }
   
   score++;
