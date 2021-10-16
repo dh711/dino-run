@@ -1,8 +1,8 @@
-#include <LiquidCrystal.h>
+#include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>
 
-// Initialize the library with the numbers of the interface pins.
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+// Initialize the library with the type of display.
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 // Bitmaps.
 // Cactus.
@@ -92,7 +92,8 @@ int readIntFromEEPROM(int address) {
 
 void setup() {
 	// Initializing LCD.
-	lcd.begin(16 ,2);
+	lcd.init();
+  lcd.backlight();
 
 	// Creating characters.
 	lcd.createChar(0, DINO);
