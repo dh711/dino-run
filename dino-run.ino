@@ -1,4 +1,5 @@
 #include <LiquidCrystal.h>
+#include <EEPROM.h>
 
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
@@ -39,18 +40,6 @@ byte crow[] = {
   B00001
 };
 
-// Crow Flying.
-byte crow_flying[] = {
-  B00001,
-  B00011,
-  B00111,
-  B01111,
-  B11111,
-  B00000,
-  B00000,
-  B00000
-};
-
 const int buttonPin = 13;
 const int jumpDuration = 600;
 
@@ -69,6 +58,19 @@ unsigned long debounceDelay = 50;
 int lastButtonState = LOW;
 int score = 0;
 int luck;
+int maxscore;
+int maxFlag=0;
+
+void writeIntIntoEEPROM(int address, int number)
+{ 
+  EEPROM.write(address, number >> 8);
+  EEPROM.write(address + 1, number & 0xFF);
+}
+
+int readIntFromEEPROM(int address)
+{
+  return (EEPROM.read(address) << 8) + EEPROM.read(address + 1);
+}
 
 void setup() {
   // Initializing LCD.
@@ -79,7 +81,6 @@ void setup() {
   lcd.createChar(0, cactus);
   lcd.createChar(1, dino);
   lcd.createChar(2, crow);
-  lcd.createChar(3, crow_flying);
 
   pinMode(buttonPin, INPUT);
   buttonState = digitalRead(buttonPin);
@@ -92,7 +93,7 @@ void loop() {
   
   // Game in progress.
   if (gameState == 1)
-    game();
+  	game();
   
   // Game over.
   if (gameState == 2)
@@ -106,7 +107,7 @@ String scrollLCDLeft(String str) {
   Lii++;
   if (Li > temp.length()) {
     Li = 16;
-    Lii = 0;
+  	Lii = 0;
   }
   delay(150);
   return result;
@@ -123,7 +124,7 @@ void splashScreen() {
   
   // On button press, start game.
   if (button() == 1) {
-    gameState = 1;
+  	gameState = 1;
     lcd.clear();
   }
 }
@@ -159,23 +160,24 @@ int button()
          }
        }
      lastButtonState = reading;
-     // return 0;
 }
+
 void renderObstacle() {
   // Move terrain and create obstacles.
   int obstacle = 0;
   
   lcd.setCursor(obstaclePos, 1);
-  lcd.write(254);
+  lcd.write(" ");
   obstaclePos--;
   
   // Reset obstatcle if out of frame.
   if (obstaclePos < 0) {
     obstaclePos = 16;
-      luck = random(10);
+    randomSeed(score);
+    luck = random(5);
   }
   
-  if (score > 100) {
+  if (score > 50) {
         if (luck % 2 == 0)
           obstacle = 2;
         else
@@ -218,7 +220,7 @@ int game() {
   if (isJumping == false && obstaclePos == 2) {
     gameState = 2;
     lcd.clear();
-      return score;
+  	return score;
   }
   
   score++;
@@ -229,16 +231,35 @@ int game() {
 
 void gameOver() {
   // Display "GAME OVER!" message.
+  maxscore = readIntFromEEPROM(0);
+  Serial.println(maxscore);
   lcd.setCursor(3, 0);
   lcd.print("GAME OVER!");
-  
-  // Display score.
-  lcd.setCursor(0, 1);
-  String display = "Score: " + String(score) + ". Press BUTTON to play again!";
-  lcd.print(scrollLCDLeft(display));
+  if (maxFlag == 1) {
+    lcd.setCursor(0, 1);
+    String display = "New High Score: " + String(score) + ". Press BUTTON to play again!";
+    lcd.print(scrollLCDLeft(display));
+  }
+  else {
+    if (score <= maxscore) {
+      // Display score.
+      lcd.setCursor(0, 1);
+      String display = "Score: " + String(score) + ". Press BUTTON to play again!";
+      lcd.print(scrollLCDLeft(display));
+      maxFlag = 0;
+    }
+    else {
+      lcd.setCursor(0, 1);
+      String display = "New High Score: " + String(score) + ". Press BUTTON to play again!";
+      lcd.print(scrollLCDLeft(display));
+      writeIntIntoEEPROM(0, score);
+      maxFlag = 1;
+    }
+  }
   
   // Restart game on button press.
   if (button() == 1) {
+    maxFlag = 0;
     score = 0;
     delayTime = 150;
     gameState = 1;
