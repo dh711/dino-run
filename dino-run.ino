@@ -92,7 +92,7 @@ void loop() {
   
   // Game in progress.
   if (gameState == 1)
-  	game();
+    game();
   
   // Game over.
   if (gameState == 2)
@@ -106,7 +106,7 @@ String scrollLCDLeft(String str) {
   Lii++;
   if (Li > temp.length()) {
     Li = 16;
-  	Lii = 0;
+    Lii = 0;
   }
   delay(150);
   return result;
@@ -123,7 +123,7 @@ void splashScreen() {
   
   // On button press, start game.
   if (button() == 1) {
-  	gameState = 1;
+    gameState = 1;
     lcd.clear();
   }
 }
@@ -159,6 +159,7 @@ int button()
          }
        }
      lastButtonState = reading;
+     return 0;
 }
 
 void renderObstacle() {
@@ -169,9 +170,9 @@ void renderObstacle() {
   lcd.write(" ");
   obstaclePos--;
   if (score > 100) {
-    	if (luck % 2 == 0)
+      if (luck % 2 == 0)
           obstacle = 2;
-    	else
+      else
           obstacle = 0;
   }
   
@@ -181,7 +182,7 @@ void renderObstacle() {
   delay(delayTime);
 }
 
-int game() {
+void game() {
   // Print current score on top right.
   lcd.setCursor(12, 0);
   lcd.print(score);
@@ -211,13 +212,12 @@ int game() {
   // Reset obstatcle if out of frame.
   if (obstaclePos < 0) {
     obstaclePos = 16;
-  	luck = random(10);
+    luck = random(10);
   }
   
   if (isJumping == false && obstaclePos == 2) {
     gameState = 2;
     lcd.clear();
-  	return score;
   }
   
   score++;
@@ -238,7 +238,7 @@ void gameOver() {
   
   // Restart game on button press.
   if (button() == 1) {
-  	score = 0;
+    score = 0;
     delayTime = 150;
     gameState = 1;
     lcd.clear();
