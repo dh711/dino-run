@@ -159,20 +159,26 @@ int button()
          }
        }
      lastButtonState = reading;
-     return 0;
+     // return 0;
 }
-
 void renderObstacle() {
   // Move terrain and create obstacles.
   int obstacle = 0;
   
   lcd.setCursor(obstaclePos, 1);
-  lcd.write(" ");
+  lcd.write(254);
   obstaclePos--;
+  
+  // Reset obstatcle if out of frame.
+  if (obstaclePos < 0) {
+    obstaclePos = 16;
+      luck = random(10);
+  }
+  
   if (score > 100) {
-      if (luck % 2 == 0)
+        if (luck % 2 == 0)
           obstacle = 2;
-      else
+        else
           obstacle = 0;
   }
   
@@ -182,7 +188,7 @@ void renderObstacle() {
   delay(delayTime);
 }
 
-void game() {
+int game() {
   // Print current score on top right.
   lcd.setCursor(12, 0);
   lcd.print(score);
@@ -209,15 +215,10 @@ void game() {
 
   renderObstacle();
   
-  // Reset obstatcle if out of frame.
-  if (obstaclePos < 0) {
-    obstaclePos = 16;
-    luck = random(10);
-  }
-  
   if (isJumping == false && obstaclePos == 2) {
     gameState = 2;
     lcd.clear();
+      return score;
   }
   
   score++;
