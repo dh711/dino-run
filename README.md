@@ -15,4 +15,4 @@ Chrome's Dinosaur Game ported to Arduino.
 
 ---
 
-#### Developed by [dh711](https://github.com/dh711) & [dhwanil-ditani](https://github.com/dhwanil-ditani)**
+#### Developed by [dh711](https://github.com/dh711) & [dhwanil-ditani](https://github.com/dhwanil-ditani)
