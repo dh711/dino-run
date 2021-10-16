@@ -165,7 +165,9 @@ int game() {
 	// Checking for collisions.
 	if (obstacleXPos == 2) {
 		if ((isJumping == false && obstacle == 1) || (isJumping == true && obstacle == 2)) {
-			gameState = 2;
+			obstacle = 1;
+          	obstacleYPos = 1;
+            gameState = 2;
 			L1 = 16;
 			L2 = 0;
 			lcd.clear();
@@ -177,7 +179,7 @@ int game() {
 	
 	// Increase speed as game progresses.
 	if (score % 100 == 1)
-		delayTime = delayTime-10;
+		delayTime = delayTime - 10;
 }
 
 void gameOver() {
