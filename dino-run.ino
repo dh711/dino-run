@@ -40,6 +40,17 @@ byte crow[] = {
   B00001
 };
 
+byte crow_flying[] = {
+  B00001,
+  B00011,
+  B00111,
+  B01111,
+  B11111,
+  B00000,
+  B00000,
+  B00000
+};
+
 const int buttonPin = 13;
 const int jumpDuration = 600;
 
@@ -80,6 +91,7 @@ void setup() {
   lcd.createChar(0, dino);
   lcd.createChar(1, cactus);
   lcd.createChar(2, crow);
+  lcd.createChar(3, crow_flying);
 
   pinMode(buttonPin, INPUT);
   buttonState = digitalRead(buttonPin);
@@ -186,7 +198,11 @@ void renderObstacle() {
   }
   
   lcd.setCursor(obstacleXPos, obstacleYPos);
-  lcd.write(byte(obstacle));
+  //lcd.write(byte(obstacle));
+  if (obstacle == 2 && obstacleXPos % 2 == 0)
+    lcd.write(byte(3));
+  else
+    lcd.write(byte(obstacle));
   
   delay(delayTime);
 }
