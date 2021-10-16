@@ -30,36 +30,73 @@ byte dino[] = {
 // Crow.
 byte crow[] = {
   B00000,
+  B00000,
   B00100,
   B01100,
   B11111,
   B00111,
   B00011,
+  B00001
+};
+
+// Crow Flying.
+byte crow_flying[] = {
   B00001,
+  B00011,
+  B00111,
+  B01111,
+  B11111,
+  B00000,
+  B00000,
   B00000
 };
 
 const int buttonPin = 13;
 const int jumpDuration = 600;
+
+
 unsigned long int startTime;
 bool isJumping = false;
-int cactusPos = 16;
+int obstaclePos = 16;
 int buttonState = LOW;
 int gameState = 0;
 int Li = 16;
 int Lii = 0;
+int delayTime = 150;
+unsigned long int currJump = 0;
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50; 
+int lastButtonState = LOW;
+int score = 0;
+int luck;
 
 void setup() {
   // Initializing LCD.
   lcd.begin(16,2);
   Serial.begin(9600);
+  
   // Creating characters.
   lcd.createChar(0, cactus);
   lcd.createChar(1, dino);
   lcd.createChar(2, crow);
+  lcd.createChar(3, crow_flying);
 
   pinMode(buttonPin, INPUT);
   buttonState = digitalRead(buttonPin);
+}
+
+void loop() {
+  // Initial state - Splash screen.
+  if (gameState == 0)
+    splashScreen();
+  
+  // Game in progress.
+  if (gameState == 1)
+  	game();
+  
+  // Game over.
+  if (gameState == 2)
+    gameOver();
 }
 
 String scrollLCDLeft(String str) {
@@ -71,15 +108,20 @@ String scrollLCDLeft(String str) {
     Li = 16;
   	Lii = 0;
   }
-  delay(100);
+  delay(150);
   return result;
 }
 
 void splashScreen() {
+  // Display game name.
   lcd.setCursor(1, 0);
   lcd.print("Dinosaur Jump!");
+  
+  // Scroll start information.
   lcd.setCursor(0, 1);
   lcd.print(scrollLCDLeft("Press BUTTON to start"));
+  
+  // On button press, start game.
   if (button() == 1) {
   	gameState = 1;
     lcd.clear();
@@ -100,12 +142,6 @@ void unjump() {
   lcd.write(byte(1));
 }
 
-unsigned long int currJump = 0;
-unsigned long lastDebounceTime = 0;
-unsigned long debounceDelay = 50; 
-int lastButtonState = LOW;
-int score = 0;
-
 int button() 
 {
      int reading = digitalRead(buttonPin);
@@ -125,65 +161,86 @@ int button()
      lastButtonState = reading;
 }
 
+void renderObstacle() {
+  // Move terrain and create obstacles.
+  int obstacle = 0;
+  
+  lcd.setCursor(obstaclePos, 1);
+  lcd.write(" ");
+  obstaclePos--;
+  if (score > 100) {
+    	if (luck % 2 == 0)
+          obstacle = 2;
+    	else
+          obstacle = 0;
+  }
+  
+  lcd.setCursor(obstaclePos, 1);
+  lcd.write(byte(obstacle));
+  
+  delay(delayTime);
+}
+
 int game() {
+  // Print current score on top right.
   lcd.setCursor(12, 0);
   lcd.print(score);
   
-  if (button() == 1) {
+  // On button press, activate jump.
+  if (button() == 1 && isJumping == false) {
     jump();
     isJumping = true;
     currJump = millis();
     Serial.print(currJump);
   }
-
+  // If jumping, check if jump duration is over.
   if (isJumping) {
     if (millis() - currJump >= jumpDuration) {
       unjump();
       isJumping = false;
     }
-  } else {
+  } 
+  // Else make sure the dinosaur doesnot clip and disappear. 
+  else {
     lcd.setCursor(2,1);
-    lcd.write(1);
+    lcd.write(byte(1));
   }
 
-  // Terrain movement.
-  lcd.setCursor(cactusPos, 1);
-  lcd.write(" ");
-  cactusPos--;
-  lcd.setCursor(cactusPos, 1);
-  lcd.write(byte(0));
-  delay(125);
-  if (cactusPos < 0) cactusPos = 16;
+  renderObstacle();
   
-  if (isJumping == false && cactusPos == 2) {
+  // Reset obstatcle if out of frame.
+  if (obstaclePos < 0) {
+    obstaclePos = 16;
+  	luck = random(10);
+  }
+  
+  if (isJumping == false && obstaclePos == 2) {
     gameState = 2;
     lcd.clear();
   	return score;
   }
   
   score++;
+  
+  if (score % 100 == 1)
+    delayTime = delayTime-10;
 }
 
 void gameOver() {
+  // Display "GAME OVER!" message.
   lcd.setCursor(3, 0);
   lcd.print("GAME OVER!");
+  
+  // Display score.
   lcd.setCursor(0, 1);
   String display = "Score: " + String(score) + ". Press BUTTON to play again!";
   lcd.print(scrollLCDLeft(display));
+  
+  // Restart game on button press.
   if (button() == 1) {
   	score = 0;
+    delayTime = 150;
     gameState = 1;
     lcd.clear();
   }
-}
-
-void loop() {
-  if (gameState == 0)
-    splashScreen();
-  
-  if (gameState == 1)
-  	game();
-  
-  if (gameState == 2)
-    gameOver();
 }
